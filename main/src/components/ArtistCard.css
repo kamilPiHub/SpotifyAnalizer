@@ -1,0 +1,4 @@
+.artist-card { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 15px; background-color: #181818; border-radius: 10px; transition: transform 0.2s, background-color 0.2s; text-align: center; }
+.artist-card:hover { background-color: #282828; transform: translateY(-5px); }
+.artist-image { width: 150px; height: 150px; border-radius: 50%; object-fit: cover; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5); }
+.artist-name { font-weight: bold; font-size: 1.1em; color: #ffffff; }
