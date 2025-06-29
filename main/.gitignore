@@ -1,24 +1,78 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# Plik .gitignore dla projektu SpotifyAnalizer
 
-# dependencies
-/node_modules
-/.pnp
-.pnp.js
-
-# testing
-/coverage
-
-# production
-/build
-
-# misc
-.DS_Store
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+# --- Sekcja kluczowych plików do ignorowania (SEKRETY!) ---
+# Pliki środowiskowe zawierające klucze API, hasła itp.
+# NIGDY nie powinny trafić na GitHuba!
 .env
+main/.env
+my-app/.env
+my-app/.env.local
+my-app/.env.development
+my-app/.env.test
+my-app/.env.production
+
+
+# --- Sekcja dla Backendu (Python / Flask w folderze 'main/') ---
+
+# Środowisko wirtualne
+main/venv/
+
+# Cache Pythona
+main/__pycache__/
+*.pyc
+
+# Pliki generowane przez instalatory Pythona
+main/build/
+main/develop-eggs/
+main/dist/
+main/downloads/
+main/eggs/
+main/.eggs/
+main/lib/
+main/lib64/
+main/parts/
+main/sdist/
+main/var/
+main/wheels/
+main/share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Baza danych (jeśli używasz np. SQLite)
+*.sqlite3
+*.db
+
+
+# --- Sekcja dla Frontendu (Node.js / React w folderze 'my-app/') ---
+
+# Folder z zależnościami (bardzo duży!)
+my-app/node_modules/
+
+# Folder z produkcyjną wersją aplikacji
+my-app/build/
+
+# Logi błędów
+my-app/npm-debug.log*
+my-app/yarn-debug.log*
+my-app/yarn-error.log*
+
+
+# --- Sekcja dla popularnych edytorów i IDE ---
+.idea/
+.vscode/
+*.swp
+
+
+# --- Sekcja dla systemów operacyjnych ---
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
