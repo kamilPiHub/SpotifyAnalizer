@@ -1,0 +1,9 @@
+{
+  "short_name": "Spotify Analyzer",
+  "name": "Spotify Wrapped Analyzer",
+  "description": "Aplikacja do analizy statystyk i tworzenia podsumowań w stylu Spotify Wrapped.",
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#1DB954",
+  "background_color": "#121212"
+}

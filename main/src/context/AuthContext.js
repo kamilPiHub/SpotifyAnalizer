@@ -2,7 +2,7 @@ import React, { createContext, useState, useContext, useEffect } from 'react';
 import axios from 'axios';
 
 const apiClient = axios.create({
-  baseURL: "http://localhost:5000",
+  baseURL: "/",
   withCredentials: true,
 });
 
@@ -15,8 +15,12 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const checkAuthStatus = async () => {
       try {
-        await apiClient.get('/api/check-auth');
-        setIsAuthenticated(true);
+        const response = await apiClient.get('/api/check-auth');
+        if (response.status === 200 && response.data?.message === "User is authenticated") {
+          setIsAuthenticated(true);
+        } else {
+          setIsAuthenticated(false);
+        }
       } catch (error) {
         setIsAuthenticated(false);
       } finally {

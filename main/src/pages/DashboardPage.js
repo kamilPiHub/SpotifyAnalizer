@@ -7,7 +7,7 @@ import TrackItem from '../components/TrackItem';
 import ArtistCard from '../components/ArtistCard';
 
 const apiClient = axios.create({
-  baseURL: "http://localhost:5000",
+  baseURL: "/", // lub po prostu usuń baseURL
   withCredentials: true,
 });
 
