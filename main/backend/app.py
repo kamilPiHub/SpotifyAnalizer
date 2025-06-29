@@ -16,7 +16,7 @@ CORS(app, supports_credentials=True, origins=["http://localhost:3000"]) # Zezwó
 CLIENT_ID = os.getenv("SPOTIPY_CLIENT_ID")
 CLIENT_SECRET = os.getenv("SPOTIPY_CLIENT_SECRET")
 # WAŻNE: Redirect URI musi być taki sam jak w panelu Spotify
-REDIRECT_URI = "http://127.0.0.1:5000" 
+REDIRECT_URI = "http://127.0.0.1:5000/callback"
 # URL frontendu, na który przekierujemy po zalogowaniu
 FRONTEND_URL = "http://localhost:3000" 
 
