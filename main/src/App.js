@@ -1,31 +1,36 @@
-// Plik: frontend/src/App.js
-import React from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import Dashboard from './DashboardPage';
-import AuthCallback from './AuthCallback';
-
-const LoginView = () => {
-  // Przycisk logowania bez zmian
-  const LOGIN_URL = 'http://127.0.0.1:5000/login';
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', backgroundColor: '#191414', color: 'white' }}>
-      <h1>Spotify Analyzer</h1>
-      <a href={LOGIN_URL} style={{ padding: '15px 30px', borderRadius: '50px', backgroundColor: '#1DB954', color: 'white', textDecoration: 'none' }}>
-        ZALOGUJ SIĘ PRZEZ SPOTIFY
-      </a>
-    </div>
-  );
-};
+import React, { useState } from 'react';
+import axios from 'axios';
 
 function App() {
+  const [loggedIn, setLoggedIn] = useState(false);
+  const [userData, setUserData] = useState(null);
+
+  const handleLogin = async () => {
+    try {
+      const response = await axios.get('http://localhost:5000/login'); // Update URL if needed
+      setUserData(response.data);
+      setLoggedIn(true);
+    } catch (error) {
+      console.error('Error logging in:', error);
+    }
+  };
+
   return (
-    <Router>
-      <Routes>
-        <Route path="/auth/callback" element={<AuthCallback />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/" element={<LoginView />} />
-      </Routes>
-    </Router>
+    <div>
+      {loggedIn ? (
+        <div>
+          <h1>Welcome, {userData?.user_info?.display_name}</h1>
+          <p>ID: {userData?.user_info?.id}</p>
+          <p>URI: {userData?.user_info?.uri}</p>
+          <a href={userData?.user_info?.profile_url}>Profile Link</a>
+        </div>
+      ) : (
+        <div>
+          <h1>Not logged in</h1>
+          <button onClick={handleLogin}>Login with Spotify</button>
+        </div>
+      )}
+    </div>
   );
 }
 

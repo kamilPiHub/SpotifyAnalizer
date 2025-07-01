@@ -1,112 +1,76 @@
 import os
-import requests
-import urllib.parse
-from dotenv import load_dotenv # type: ignore
-from flask import Flask, request, redirect, jsonify
-from flask_cors import CORS # type: ignore
+from dotenv import load_dotenv
+import spotipy
+
+from flask import Flask, session, jsonify
+from flask_cookie_decode import CookieDecode
+from spotipy.oauth2 import SpotifyOAuth
+from flask_cors import CORS, cross_origin
 
 load_dotenv()
+CLIENT_ID = os.getenv('SPOTIPY_CLIENT_ID')
+CLIENT_SECRET = os.getenv('SPOTIPY_CLIENT_SECRET')
+REDIRECT_URI = os.getenv('SPOTIPY_REDIRECT_URI')
+username = os.getenv('SPOTIFY_USERNAME')
+SCOPEs = 'user-read-private user-read-email user-top-read playlist-read-private playlist-modify-public playlist-modify-private'
 
+# Create the Flask application
 app = Flask(__name__)
-# W tym modelu nie potrzebujemy już SECRET_KEY, bo nie używamy sesji Flask
-CORS(app, origins=["http://localhost:3000"])
+cors = CORS(app)
+app.config['CORS_HEADERS'] = 'Content-Type'
 
-# --- Stałe Spotify ---
-CLIENT_ID = os.getenv("SPOTIPY_CLIENT_ID")
-CLIENT_SECRET = os.getenv("SPOTIPY_CLIENT_SECRET")
-REDIRECT_URI = "http://127.0.0.1:5000/callback"
-FRONTEND_URL = "http://localhost:3000"
+app.config.update({'SECRET_KEY': 'MY_SECRET_KEY'})
+cookie = CookieDecode()
+cookie.init_app(app)
 
-AUTH_URL = "https://accounts.spotify.com/authorize"
-TOKEN_URL = "https://accounts.spotify.com/api/token"
-API_BASE_URL = "https://api.spotify.com/v1/"
-SCOPE = "user-read-private user-read-email user-top-read user-read-recently-played"
+cache_handler = spotipy.cache_handler.FlaskSessionCacheHandler(session)
+auth_manager = SpotifyOAuth(client_id=CLIENT_ID,
+                            client_secret=CLIENT_SECRET,
+                            redirect_uri=REDIRECT_URI,
+                            scope=SCOPEs,
+                            username=username,
+                            cache_handler=cache_handler)
+auth_url = auth_manager.get_authorize_url()
 
-# --- Logika Autoryzacji ---
+@app.route('/get_logged')
+@cross_origin()
+def get_session():
+    if (session and session['user']):
+        return jsonify(dict(session))
+    else:
+        return jsonify({'logged_in': False, 'auth_url': auth_url})
 
-@app.route("/login")
+@app.route('/clear_session')
+@cross_origin()
+def clear_session():
+    session.clear()
+    return jsonify({'session': 'cleared'})
+
+@app.route('/login')
+@cross_origin()
 def login():
-    params = {
-        "client_id": CLIENT_ID,
-        "response_type": "code",
-        "redirect_uri": REDIRECT_URI,
-        "scope": SCOPE,
-        "show_dialog": True
-    }
-    auth_url = f"{AUTH_URL}?{urllib.parse.urlencode(params)}"
-    return redirect(auth_url)
+    auth_manager = SpotifyOAuth(client_id=CLIENT_ID,
+                                client_secret=CLIENT_SECRET,
+                                redirect_uri=REDIRECT_URI,
+                                scope=SCOPEs,
+                                username=username)
+    if (session and session['user']):
+        data = jsonify(dict(session).get('user')['user_info'])
+        return data
 
-@app.route("/callback")
-def callback():
-    if 'error' in request.args:
-        return redirect(f"{FRONTEND_URL}/?error={request.args['error']}")
-    
-    if 'code' in request.args:
-        req_body = {
-            "code": request.args["code"],
-            "grant_type": "authorization_code",
-            "redirect_uri": REDIRECT_URI,
-            "client_id": CLIENT_ID,
-            "client_secret": CLIENT_SECRET,
+    sp = spotipy.Spotify(auth_manager=auth_manager)
+    user_info = sp.me()
+    simple_user_info = {
+        "logged_in": True,
+        "user_info": {
+            "display_name": user_info["display_name"],
+            "id": user_info["id"],
+            "uri": user_info["uri"],
+            "profile_url": user_info["external_urls"]["spotify"]
         }
-        response = requests.post(TOKEN_URL, data=req_body)
-        token_info = response.json()
-
-        # KLUCZOWA ZMIANA: Przekazujemy tokeny do frontendu jako parametry URL
-        access_token = token_info["access_token"]
-        refresh_token = token_info["refresh_token"]
-        expires_in = token_info["expires_in"]
-        
-        # Przekieruj do specjalnej ścieżki na frontendzie, która przechwyci tokeny
-        return redirect(f"{FRONTEND_URL}/auth/callback?access_token={access_token}&refresh_token={refresh_token}&expires_in={expires_in}")
-
-# --- API Endpoints ---
-# Zwróć uwagę, że nie ma tu już logiki sesji!
-
-@app.route("/api/profile")
-def get_profile():
-    # Oczekujemy nagłówka: Authorization: Bearer <access_token>
-    auth_header = request.headers.get('Authorization')
-    if not auth_header:
-        return jsonify({"error": "Authorization header required"}), 401
-    
-    try:
-        access_token = auth_header.split(" ")[1]
-    except IndexError:
-        return jsonify({"error": "Invalid Authorization header format"}), 401
-
-    headers = {"Authorization": f"Bearer {access_token}"}
-    response = requests.get(API_BASE_URL + "me", headers=headers)
-    return jsonify(response.json()), response.status_code
-
-@app.route("/api/top-tracks")
-def get_top_tracks():
-    auth_header = request.headers.get('Authorization')
-    if not auth_header:
-        return jsonify({"error": "Authorization header required"}), 401
-    access_token = auth_header.split(" ")[1]
-    
-    headers = {"Authorization": f"Bearer {access_token}"}
-    params = {"time_range": request.args.get("time_range", "medium_term"), "limit": 50}
-    response = requests.get(API_BASE_URL + "me/top/tracks", headers=headers, params=params)
-    return jsonify(response.json()), response.status_code
-
-# Endpoint do odświeżania tokenu - teraz jest to konieczne!
-@app.route('/api/refresh-token')
-def refresh_token():
-    refresh_token = request.args.get('refresh_token')
-    if not refresh_token:
-        return jsonify({'error': 'Refresh token is required'}), 400
-
-    req_body = {
-        "grant_type": "refresh_token",
-        "refresh_token": refresh_token,
-        "client_id": CLIENT_ID,
-        "client_secret": CLIENT_SECRET,
     }
-    response = requests.post(TOKEN_URL, data=req_body)
-    return jsonify(response.json()), response.status_code
+    session['user'] = simple_user_info
+    return jsonify(dict(session).get('user'))
 
-
-if __name__ == "__main__":
-    app.run(port=5000)
+if __name__ == '__main__':
+    app.run()
