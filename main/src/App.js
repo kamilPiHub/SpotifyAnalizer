@@ -25,10 +25,41 @@ function App() {
           <a href={userData?.user_info?.profile_url}>Profile Link</a>
         </div>
       ) : (
-        <div>
-          <h1>Not logged in</h1>
-          <button onClick={handleLogin}>Login with Spotify</button>
-        </div>
+        <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        height: "100vh",
+        width: "100vw",
+        backgroundColor: "#191414",
+        color: "white",
+      }}
+    >
+      <h1 style={{ fontSize: "3rem", marginBottom: "2rem" }}>
+        Spotify Analyzer
+      </h1>
+      <p style={{ marginBottom: "2.5rem" }}>
+        Zaloguj się, aby zobaczyć swoje statystyki.
+      </p>
+      <button
+        onClick={handleLogin}
+        style={{
+          padding: "15px 30px",
+          borderRadius: "50px",
+          backgroundColor: "#1DB954",
+          color: "white",
+          border: "none",
+          textDecoration: "none",
+          fontWeight: "bold",
+          fontSize: "1rem",
+          cursor: "pointer",
+        }}
+      >
+        ZALOGUJ SIĘ PRZEZ SPOTIFY
+      </button>
+    </div>
       )}
     </div>
   );

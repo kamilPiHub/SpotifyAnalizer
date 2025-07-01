@@ -4,6 +4,7 @@
 # Pliki środowiskowe zawierające klucze API, hasła itp.
 # NIGDY nie powinny trafić na GitHuba!
 .env
+backend/.env
 main/.env
 my-app/.env
 my-app/.env.local
