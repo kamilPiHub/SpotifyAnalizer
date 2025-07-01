@@ -23,22 +23,25 @@ app.config.update({'SECRET_KEY': 'MY_SECRET_KEY'})
 cookie = CookieDecode()
 cookie.init_app(app)
 
-cache_handler = spotipy.cache_handler.FlaskSessionCacheHandler(session)
-auth_manager = SpotifyOAuth(client_id=CLIENT_ID,
-                            client_secret=CLIENT_SECRET,
-                            redirect_uri=REDIRECT_URI,
-                            scope=SCOPEs,
-                            username=username,
-                            cache_handler=cache_handler)
-auth_url = auth_manager.get_authorize_url()
+def get_auth_manager():
+    return SpotifyOAuth(
+        client_id=CLIENT_ID,
+        client_secret=CLIENT_SECRET,
+        redirect_uri=REDIRECT_URI,
+        scope=SCOPEs,
+        cache_handler=spotipy.cache_handler.FlaskSessionCacheHandler(session)
+    )
+
+def get_auth_url():
+    return get_auth_manager().get_authorize_url()
 
 @app.route('/get_logged')
 @cross_origin()
 def get_session():
-    if (session and session['user']):
+    if (session and session.get('user')):
         return jsonify(dict(session))
     else:
-        return jsonify({'logged_in': False, 'auth_url': auth_url})
+        return jsonify({'logged_in': False, 'auth_url': get_auth_url()})
 
 @app.route('/clear_session')
 @cross_origin()
@@ -49,12 +52,8 @@ def clear_session():
 @app.route('/login')
 @cross_origin()
 def login():
-    auth_manager = SpotifyOAuth(client_id=CLIENT_ID,
-                                client_secret=CLIENT_SECRET,
-                                redirect_uri=REDIRECT_URI,
-                                scope=SCOPEs,
-                                username=username)
-    if (session and session['user']):
+    auth_manager = get_auth_manager()
+    if session.get('user'):
         data = jsonify(dict(session).get('user')['user_info'])
         return data
 
